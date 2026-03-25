@@ -1,0 +1,5 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres_auth
+    username: bido_admin_user
+    password: vm62sZgnPhjR4F3x9GY2
