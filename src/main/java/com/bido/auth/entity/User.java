@@ -1,11 +1,12 @@
 package com.bido.auth.entity;
 
+import com.bido.auth.entity.enums.UserRole;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @Table(name = "users")
@@ -28,12 +29,11 @@ public class User {
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
     @Column(name = "last_login_at")
-    private LocalDateTime lastLoginAt;
+    private Instant lastLoginAt;
 
-    // Constructori
     public User() {
     }
 
@@ -43,7 +43,6 @@ public class User {
         this.isSuspended = false;
     }
 
-    // Getteri și Setteri
     public Long getId() {
         return id;
     }
@@ -76,19 +75,19 @@ public class User {
         isSuspended = suspended;
     }
 
-    public LocalDateTime getCreatedAt() {
+    public Instant getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
+    public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
     }
 
-    public LocalDateTime getLastLoginAt() {
+    public Instant getLastLoginAt() {
         return lastLoginAt;
     }
 
-    public void setLastLoginAt(LocalDateTime lastLoginAt) {
+    public void setLastLoginAt(Instant lastLoginAt) {
         this.lastLoginAt = lastLoginAt;
     }
 }
