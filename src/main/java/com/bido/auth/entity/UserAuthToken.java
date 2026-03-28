@@ -23,7 +23,7 @@ public class UserAuthToken {
     private Instant expiresAt;
 
     @Column(nullable = false)
-    private Integer attemptsCount = 0;
+    private int attemptsCount = 0;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
@@ -61,11 +61,11 @@ public class UserAuthToken {
         this.expiresAt = expiresAt;
     }
 
-    public Integer getAttemptsCount() {
+    public int getAttemptsCount() {
         return attemptsCount;
     }
 
-    public void setAttemptsCount(Integer attemptsCount) {
+    public void setAttemptsCount(int attemptsCount) {
         this.attemptsCount = attemptsCount;
     }
 

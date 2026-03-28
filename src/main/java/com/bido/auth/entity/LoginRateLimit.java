@@ -12,7 +12,7 @@ public class LoginRateLimit {
     private String email;
 
     @Column(nullable = false)
-    private Integer tokensRequested = 0;
+    private int tokensRequested = 0;
 
     private Instant blockedUntil;
 
@@ -27,11 +27,11 @@ public class LoginRateLimit {
         this.email = email;
     }
 
-    public Integer getTokensRequested() {
+    public int getTokensRequested() {
         return tokensRequested;
     }
 
-    public void setTokensRequested(Integer tokensRequested) {
+    public void setTokensRequested(int tokensRequested) {
         this.tokensRequested = tokensRequested;
     }
 

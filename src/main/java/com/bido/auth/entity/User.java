@@ -25,7 +25,7 @@ public class User {
     private UserRole role;
 
     @Column(nullable = false)
-    private Boolean isSuspended = false;
+    private boolean isSuspended = false;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
@@ -66,11 +66,11 @@ public class User {
         this.role = role;
     }
 
-    public Boolean isSuspended() {
+    public boolean isSuspended() {
         return isSuspended;
     }
 
-    public void setSuspended(Boolean suspended) {
+    public void setSuspended(boolean suspended) {
         isSuspended = suspended;
     }
 
