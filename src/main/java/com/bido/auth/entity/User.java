@@ -24,14 +24,13 @@ public class User {
     @Column(nullable = false)
     private UserRole role;
 
-    @Column(name = "is_suspended", nullable = false)
-    private boolean isSuspended = false;
+    @Column(nullable = false)
+    private Boolean isSuspended = false;
 
     @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
-    @Column(name = "last_login_at")
     private Instant lastLoginAt;
 
     public User() {
@@ -67,11 +66,11 @@ public class User {
         this.role = role;
     }
 
-    public boolean isSuspended() {
+    public Boolean isSuspended() {
         return isSuspended;
     }
 
-    public void setSuspended(boolean suspended) {
+    public void setSuspended(Boolean suspended) {
         isSuspended = suspended;
     }
 
