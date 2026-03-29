@@ -10,5 +10,7 @@ import java.util.Optional;
 public interface UserAuthTokenRepository extends JpaRepository<UserAuthToken, Long> {
 
     Optional<UserAuthToken> findByEmail(String email);
+
+    void deleteByEmail(String email);
 }
 
