@@ -17,7 +17,7 @@ public class LoginRateLimit {
     private Instant blockedUntil;
 
     @Column(nullable = false)
-    private Instant lastAttemptAt = Instant.now();
+    private Instant lastAttemptAt;
 
     public String getEmail() {
         return email;

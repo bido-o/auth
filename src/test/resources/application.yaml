@@ -1,5 +1,10 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/postgres_auth
+    url: jdbc:postgresql://localhost:5432/auth_db
     username: bido_admin_user
     password: vm62sZgnPhjR4F3x9GY2
+
+jwt:
+  secret: some_secret_key_for_testing_purposes_only
+  access-token:
+    expiration: 900000

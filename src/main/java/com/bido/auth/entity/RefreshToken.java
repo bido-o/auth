@@ -14,7 +14,7 @@ public class RefreshToken {
     private Long id;
 
     @Column(nullable = false, unique = true)
-    private String tokenHash;
+    private String token;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
@@ -35,12 +35,12 @@ public class RefreshToken {
         this.id = id;
     }
 
-    public String getTokenHash() {
-        return tokenHash;
+    public String getToken() {
+        return token;
     }
 
-    public void setTokenHash(String tokenHash) {
-        this.tokenHash = tokenHash;
+    public void setToken(String tokenHash) {
+        this.token = tokenHash;
     }
 
     public User getUser() {
