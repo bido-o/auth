@@ -10,8 +10,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.UUID;
 
-import static java.time.temporal.ChronoUnit.DAYS;
-
 @Service
 public class TokenService {
 
@@ -24,14 +22,14 @@ public class TokenService {
     }
 
     @Transactional
-    public AuthResponse createTokenPair(User user) {
+    public AuthResponse createTokenPair(User user, Instant expirationDate) {
         String accessToken = jwtService.generateAccessToken(user);
         String refreshTokenValue = UUID.randomUUID().toString();
 
         RefreshToken refreshToken = new RefreshToken();
         refreshToken.setUser(user);
         refreshToken.setToken(refreshTokenValue);
-        refreshToken.setExpiresAt(Instant.now().plus(30, DAYS));
+        refreshToken.setExpiresAt(expirationDate);
 
         refreshTokenRepository.save(refreshToken);
 
@@ -39,18 +37,19 @@ public class TokenService {
     }
 
     @Transactional
-    public AuthResponse refreshAccessToken(String refreshTokenString) {
-        RefreshToken refreshToken = refreshTokenRepository.findByToken(refreshTokenString)
+    public AuthResponse refreshAccessToken(String oldRefreshTokenString) {
+        RefreshToken oldRefreshToken = refreshTokenRepository.findByToken(oldRefreshTokenString)
                 .orElseThrow(() -> new RuntimeException("Refresh Token invalid sau inexistent!"));
 
-        if (refreshToken.getExpiresAt().isBefore(Instant.now())) {
-            refreshTokenRepository.delete(refreshToken);
+        if (oldRefreshToken.getExpiresAt().isBefore(Instant.now())) {
+            refreshTokenRepository.delete(oldRefreshToken);
             throw new RuntimeException("Sesiunea a expirat. Te rugăm să te loghezi din nou.");
         }
 
-        User user = refreshToken.getUser();
-        String newAccessToken = jwtService.generateAccessToken(user);
+        User user = oldRefreshToken.getUser();
 
-        return new AuthResponse(newAccessToken, refreshTokenString);
+        refreshTokenRepository.delete(oldRefreshToken);
+
+        return createTokenPair(user, oldRefreshToken.getExpiresAt());
     }
 }

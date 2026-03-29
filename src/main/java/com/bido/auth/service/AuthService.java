@@ -9,6 +9,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 
+import static java.time.temporal.ChronoUnit.DAYS;
+
 @Service
 public class AuthService {
 
@@ -47,7 +49,8 @@ public class AuthService {
 
         user.setLastLoginAt(Instant.now());
 
-        return tokenService.createTokenPair(user);
+        Instant expirationDate = Instant.now().plus(30, DAYS);
+        return tokenService.createTokenPair(user, expirationDate);
     }
 
     @Transactional

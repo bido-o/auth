@@ -6,6 +6,7 @@ import com.bido.auth.repository.LoginRateLimitRepository;
 import com.bido.auth.repository.UserAuthTokenRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.time.Instant;
@@ -27,6 +28,7 @@ public class OtpService {
         this.passwordEncoder = passwordEncoder;
     }
 
+    @Transactional
     public void checkAndApplyRateLimit(String email) {
         LoginRateLimit rateLimit = rateLimitRepository.findById(email)
                 .orElseGet(() -> {
@@ -58,6 +60,7 @@ public class OtpService {
         rateLimitRepository.save(rateLimit);
     }
 
+    @Transactional
     public void validateAndConsumeOtp(String email, String otpCode) {
         UserAuthToken authToken = authTokenRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Nu a fost cerut niciun cod pentru acest email!"));
@@ -76,9 +79,12 @@ public class OtpService {
         rateLimitRepository.deleteById(email);
     }
 
+    @Transactional
     public void generateAndSendOtp(String email) {
         String otpCode = generateSecureOtp();
         String hashedOtp = passwordEncoder.encode(otpCode);
+
+        authTokenRepository.deleteByEmail(email);
 
         UserAuthToken authToken = new UserAuthToken();
         authToken.setEmail(email);
