@@ -17,11 +17,18 @@ import java.util.function.Function;
 @Service
 public class JwtService {
 
-    @Value("${jwt.secret}")
-    private String secretKey;
+    private final SecretKey secretKey;
+    private final long jwtExpiration;
 
-    @Value("${jwt.access-token.expiration}")
-    private long jwtExpiration;
+    public JwtService(
+            @Value("${jwt.secret}") String secretKeyString,
+            @Value("${jwt.access-token.expiration}") long jwtExpiration
+    ) {
+        this.jwtExpiration = jwtExpiration;
+
+        byte[] keyBytes = Decoders.BASE64.decode(secretKeyString);
+        this.secretKey = Keys.hmacShaKeyFor(keyBytes);
+    }
 
     public String extractEmail(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -45,7 +52,7 @@ public class JwtService {
                 .subject(email)
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + expiration))
-                .signWith(getSignInKey())
+                .signWith(secretKey)
                 .compact();
     }
 
@@ -64,14 +71,9 @@ public class JwtService {
 
     private Claims extractAllClaims(String token) {
         return Jwts.parser()
-                .verifyWith(getSignInKey())
+                .verifyWith(secretKey)
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
-    }
-
-    private SecretKey getSignInKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(secretKey);
-        return Keys.hmacShaKeyFor(keyBytes);
     }
 }
