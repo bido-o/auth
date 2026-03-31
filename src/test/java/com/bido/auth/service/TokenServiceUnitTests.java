@@ -61,23 +61,23 @@ class TokenServiceUnitTests {
 
         assertNotNull(response);
         assertEquals("new_jwt", response.accessToken());
-        assertNotEquals("old_uuid", response.refreshToken()); // A returnat un UUID nou?
+        assertNotEquals("old_uuid", response.refreshToken());
 
-        verify(refreshTokenRepository).delete(oldToken); // A șters token-ul vechi?
+        verify(refreshTokenRepository).delete(oldToken);
 
         ArgumentCaptor<RefreshToken> captor = ArgumentCaptor.forClass(RefreshToken.class);
         verify(refreshTokenRepository).save(captor.capture());
-        assertEquals(originalExp, captor.getValue().getExpiresAt()); // S-a păstrat data absolută de expirare?
+        assertEquals(originalExp, captor.getValue().getExpiresAt());
     }
 
     @Test
     void refreshAccessToken_ThrowsException_IfExpired() {
         RefreshToken oldToken = new RefreshToken();
-        oldToken.setExpiresAt(Instant.now().minus(1, DAYS)); // A expirat ieri
+        oldToken.setExpiresAt(Instant.now().minus(1, DAYS));
 
         when(refreshTokenRepository.findByToken("old_uuid")).thenReturn(Optional.of(oldToken));
 
         assertThrows(RuntimeException.class, () -> tokenService.refreshAccessToken("old_uuid"));
-        verify(refreshTokenRepository).delete(oldToken); // S-a șters automat din DB?
+        verify(refreshTokenRepository).delete(oldToken);
     }
 }

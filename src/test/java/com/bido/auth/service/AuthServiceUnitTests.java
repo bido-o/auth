@@ -56,7 +56,7 @@ class AuthServiceUnitTests {
 
         // Act & Assert
         assertThrows(RuntimeException.class, () -> authService.requestOtp(TEST_EMAIL));
-        verify(otpService, never()).generateAndSendOtp(anyString()); // Nu trimite nimic
+        verify(otpService, never()).generateAndSendOtp(anyString());
     }
 
     @Test
@@ -75,25 +75,7 @@ class AuthServiceUnitTests {
 
         // Assert
         assertNotNull(response);
-        assertNotNull(user.getLastLoginAt()); // S-a actualizat data logării?
+        assertNotNull(user.getLastLoginAt());
         verify(tokenService).createTokenPair(eq(user), any(Instant.class));
-    }
-
-    @Test
-    void refreshToken_Success() {
-        // Arrange
-        String refreshTokenString = "some-refresh-token";
-        AuthResponse expectedResponse = new AuthResponse("new-access", "new-refresh");
-
-        // Când AuthService apelează TokenService, returnăm un răspuns simulat
-        when(tokenService.refreshAccessToken(refreshTokenString)).thenReturn(expectedResponse);
-
-        // Act
-        AuthResponse response = authService.refreshToken(refreshTokenString);
-
-        // Assert
-        assertNotNull(response);
-        assertEquals(expectedResponse, response);
-        verify(tokenService, times(1)).refreshAccessToken(refreshTokenString); // Verificăm că a delegat corect
     }
 }

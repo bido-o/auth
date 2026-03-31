@@ -38,11 +38,13 @@ public class OtpService {
                     return newLimit;
                 });
 
+        // is blocked
         if (rateLimit.getBlockedUntil() != null && Instant.now().isBefore(rateLimit.getBlockedUntil())) {
             long minutesLeft = MINUTES.between(Instant.now(), rateLimit.getBlockedUntil());
             throw new RuntimeException("Prea multe încercări. Cont blocat temporar pentru încă " + minutesLeft + " minute.");
         }
 
+        // > 20 min from last attempt passed
         if (rateLimit.getLastAttemptAt().plus(20, MINUTES).isBefore(Instant.now())) {
             rateLimit.setTokensRequested(0);
             rateLimit.setBlockedUntil(null);
@@ -60,6 +62,7 @@ public class OtpService {
         rateLimitRepository.save(rateLimit);
     }
 
+    // TODO: use attempts count from auth token
     @Transactional
     public void validateAndConsumeOtp(String email, String otpCode) {
         UserAuthToken authToken = authTokenRepository.findByEmail(email)
@@ -69,6 +72,8 @@ public class OtpService {
             authTokenRepository.delete(authToken);
             throw new RuntimeException("Codul OTP a expirat. Te rugăm să ceri altul.");
         }
+
+        // if 3 attempts -> delete token and throw
 
         if (!passwordEncoder.matches(otpCode, authToken.getOtpCodeHash())) {
             throw new RuntimeException("Cod OTP incorect!");

@@ -49,6 +49,7 @@ public class AuthService {
 
         user.setLastLoginAt(Instant.now());
 
+        //TODO: add statics class whose values are also used in tests
         Instant expirationDate = Instant.now().plus(30, DAYS);
         return tokenService.createTokenPair(user, expirationDate);
     }
