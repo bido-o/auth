@@ -6,7 +6,6 @@ import com.bido.auth.repository.LoginRateLimitRepository;
 import com.bido.auth.repository.UserAuthTokenRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -15,6 +14,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import java.time.Instant;
 import java.util.Optional;
 
+import static com.bido.auth.utils.Statics.BLOCK_DURATION_MINUTES;
+import static com.bido.auth.utils.Statics.MAX_TOKENS_REQUESTED;
 import static java.time.temporal.ChronoUnit.MINUTES;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -64,7 +65,7 @@ class OtpServiceUnitTests {
     void checkAndApplyRateLimit_ThrowsException_IfLimitReached() {
         LoginRateLimit limit = new LoginRateLimit();
         limit.setEmail(TEST_EMAIL);
-        limit.setTokensRequested(5); // E la limită
+        limit.setTokensRequested(MAX_TOKENS_REQUESTED);
         limit.setLastAttemptAt(Instant.now().minus(2, MINUTES));
 
         when(rateLimitRepository.findById(TEST_EMAIL)).thenReturn(Optional.of(limit));
@@ -78,7 +79,7 @@ class OtpServiceUnitTests {
         // Arrange
         LoginRateLimit limit = new LoginRateLimit();
         limit.setEmail(TEST_EMAIL);
-        limit.setTokensRequested(5);
+        limit.setTokensRequested(MAX_TOKENS_REQUESTED);
         limit.setBlockedUntil(null);
         limit.setLastAttemptAt(Instant.now().minus(25, MINUTES)); // MAGIA: Ultima încercare a fost acum 25 de minute!
 
@@ -97,9 +98,9 @@ class OtpServiceUnitTests {
         // Arrange
         LoginRateLimit limit = new LoginRateLimit();
         limit.setEmail(TEST_EMAIL);
-        limit.setTokensRequested(5);
-        limit.setBlockedUntil(Instant.now().minus(5, MINUTES));
-        limit.setLastAttemptAt(Instant.now().minus(60 + 5, MINUTES));
+        limit.setTokensRequested(MAX_TOKENS_REQUESTED);
+        limit.setBlockedUntil(Instant.now().minus(2, MINUTES));
+        limit.setLastAttemptAt(Instant.now().minus(BLOCK_DURATION_MINUTES + 2, MINUTES));
 
         when(rateLimitRepository.findById(TEST_EMAIL)).thenReturn(Optional.of(limit));
 
@@ -116,7 +117,7 @@ class OtpServiceUnitTests {
     void validateAndConsumeOtp_Success() {
         UserAuthToken token = new UserAuthToken();
         token.setOtpCodeHash("hash");
-        token.setExpiresAt(Instant.now().plus(5, MINUTES));
+        token.setExpiresAt(Instant.now().plus(4, MINUTES));
 
         when(authTokenRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.of(token));
         when(passwordEncoder.matches("123456", "hash")).thenReturn(true);
@@ -131,7 +132,7 @@ class OtpServiceUnitTests {
     void validateAndConsumeOtp_ThrowsException_IfIncorrect() {
         UserAuthToken token = new UserAuthToken();
         token.setOtpCodeHash("hash");
-        token.setExpiresAt(Instant.now().plus(5, MINUTES));
+        token.setExpiresAt(Instant.now().plus(4, MINUTES));
 
         when(authTokenRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.of(token));
         when(passwordEncoder.matches("wrong", "hash")).thenReturn(false);
@@ -144,7 +145,7 @@ class OtpServiceUnitTests {
     void validateAndConsumeOtp_ThrowsException_IfExpired() {
         UserAuthToken expiredToken = new UserAuthToken();
         expiredToken.setEmail(TEST_EMAIL);
-        expiredToken.setExpiresAt(Instant.now().minus(5, MINUTES));
+        expiredToken.setExpiresAt(Instant.now().minus(4, MINUTES));
 
         when(authTokenRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.of(expiredToken));
 

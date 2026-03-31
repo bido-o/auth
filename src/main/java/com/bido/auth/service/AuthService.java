@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 
+import static com.bido.auth.utils.Statics.REFRESH_TOKEN_EXPIRATION_DAYS;
 import static java.time.temporal.ChronoUnit.DAYS;
 
 @Service
@@ -49,8 +50,7 @@ public class AuthService {
 
         user.setLastLoginAt(Instant.now());
 
-        //TODO: add statics class whose values are also used in tests
-        Instant expirationDate = Instant.now().plus(30, DAYS);
+        Instant expirationDate = Instant.now().plus(REFRESH_TOKEN_EXPIRATION_DAYS, DAYS);
         return tokenService.createTokenPair(user, expirationDate);
     }
 

@@ -11,7 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.security.SecureRandom;
 import java.time.Instant;
 
-import static java.time.temporal.ChronoUnit.HOURS;
+import static com.bido.auth.utils.Statics.*;
 import static java.time.temporal.ChronoUnit.MINUTES;
 
 @Service
@@ -45,7 +45,7 @@ public class OtpService {
         }
 
         // > 20 min from last attempt passed
-        if (rateLimit.getLastAttemptAt().plus(20, MINUTES).isBefore(Instant.now())) {
+        if (rateLimit.getLastAttemptAt().plus(SPAM_RESET_MINUTES, MINUTES).isBefore(Instant.now())) {
             rateLimit.setTokensRequested(0);
             rateLimit.setBlockedUntil(null);
         }
@@ -53,8 +53,8 @@ public class OtpService {
         rateLimit.setTokensRequested(rateLimit.getTokensRequested() + 1);
         rateLimit.setLastAttemptAt(Instant.now());
 
-        if (rateLimit.getTokensRequested() > 5) {
-            rateLimit.setBlockedUntil(Instant.now().plus(1, HOURS));
+        if (rateLimit.getTokensRequested() > MAX_TOKENS_REQUESTED) {
+            rateLimit.setBlockedUntil(Instant.now().plus(BLOCK_DURATION_MINUTES, MINUTES));
             rateLimitRepository.save(rateLimit);
             throw new RuntimeException("Ai cerut prea multe coduri OTP. Te rugăm să încerci din nou peste o oră.");
         }
@@ -94,7 +94,7 @@ public class OtpService {
         UserAuthToken authToken = new UserAuthToken();
         authToken.setEmail(email);
         authToken.setOtpCodeHash(hashedOtp);
-        authToken.setExpiresAt(Instant.now().plus(5, MINUTES));
+        authToken.setExpiresAt(Instant.now().plus(OTP_EXPIRATION_MINUTES, MINUTES));
         authToken.setAttemptsCount(0);
 
         authTokenRepository.save(authToken);
@@ -103,7 +103,7 @@ public class OtpService {
         System.out.println("\n=====================================================");
         System.out.println("📩 EMAIL SIMULAT CĂTRE: " + email);
         System.out.println("🔑 CODUL TĂU DE LOGIN ESTE: " + otpCode);
-        System.out.println("⏳ Codul expiră în 5 minute.");
+        System.out.println("⏳ Codul expiră în " + OTP_EXPIRATION_MINUTES + " minute.");
         System.out.println("=====================================================\n");
     }
 

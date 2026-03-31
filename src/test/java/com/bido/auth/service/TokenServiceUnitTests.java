@@ -15,6 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.Instant;
 import java.util.Optional;
 
+import static com.bido.auth.utils.Statics.REFRESH_TOKEN_EXPIRATION_DAYS;
 import static java.time.temporal.ChronoUnit.DAYS;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -32,7 +33,7 @@ class TokenServiceUnitTests {
     @Test
     void createTokenPair_Success() {
         User user = new User("test@bido.ro", UserRole.CLIENT);
-        Instant exp = Instant.now().plus(30, DAYS);
+        Instant exp = Instant.now().plus(REFRESH_TOKEN_EXPIRATION_DAYS, DAYS);
         when(jwtService.generateAccessToken(user)).thenReturn("jwt_token");
 
         AuthResponse response = tokenService.createTokenPair(user, exp);
