@@ -27,12 +27,16 @@ public class RefreshToken {
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
-    public Long getId() {
-        return id;
+    public RefreshToken(User user, String token, Instant expiresAt) {
+        this.user = user;
+        this.token = token;
+        this.expiresAt = expiresAt;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public RefreshToken() {}
+
+    public Long getId() {
+        return id;
     }
 
     public String getToken() {

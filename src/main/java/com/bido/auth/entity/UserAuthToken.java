@@ -16,25 +16,30 @@ public class UserAuthToken {
     @Column(nullable = false)
     private String email;
 
-    @Column(nullable = false)
+    @Column(nullable = false, updatable = false)
     private String otpCodeHash;
 
-    @Column(nullable = false)
+    @Column(nullable = false, updatable = false)
     private Instant expiresAt;
 
     @Column(nullable = false)
-    private int attemptsCount = 0;
+    private int attemptsCount;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
-    public Long getId() {
-        return id;
+    public UserAuthToken(String email, String otpCodeHash, Instant expiresAt) {
+        this.email = email;
+        this.otpCodeHash = otpCodeHash;
+        this.expiresAt = expiresAt;
+        this.attemptsCount = 0;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public UserAuthToken() {}
+
+    public Long getId() {
+        return id;
     }
 
     public String getEmail() {

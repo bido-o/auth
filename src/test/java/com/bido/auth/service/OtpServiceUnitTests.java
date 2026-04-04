@@ -23,9 +23,14 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class OtpServiceUnitTests {
 
-    @Mock private LoginRateLimitRepository rateLimitRepository;
-    @Mock private UserAuthTokenRepository authTokenRepository;
-    @Mock private PasswordEncoder passwordEncoder;
+    @Mock
+    private LoginRateLimitRepository rateLimitRepository;
+
+    @Mock
+    private UserAuthTokenRepository authTokenRepository;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
     @InjectMocks
     private OtpService otpService;
@@ -35,10 +40,8 @@ class OtpServiceUnitTests {
     @Test
     void checkAndApplyRateLimit_Success_NormalRequest() {
         // Arrange
-        LoginRateLimit limit = new LoginRateLimit();
-        limit.setEmail(TEST_EMAIL);
+        LoginRateLimit limit = new LoginRateLimit(TEST_EMAIL);
         limit.setTokensRequested(2);
-        limit.setLastAttemptAt(Instant.now());
 
         when(rateLimitRepository.findById(TEST_EMAIL)).thenReturn(Optional.of(limit));
 
@@ -52,8 +55,7 @@ class OtpServiceUnitTests {
 
     @Test
     void checkAndApplyRateLimit_ThrowsException_IfBlocked() {
-        LoginRateLimit limit = new LoginRateLimit();
-        limit.setEmail(TEST_EMAIL);
+        LoginRateLimit limit = new LoginRateLimit(TEST_EMAIL);
         limit.setBlockedUntil(Instant.now().plus(30, MINUTES));
 
         when(rateLimitRepository.findById(TEST_EMAIL)).thenReturn(Optional.of(limit));
@@ -63,8 +65,7 @@ class OtpServiceUnitTests {
 
     @Test
     void checkAndApplyRateLimit_ThrowsException_IfLimitReached() {
-        LoginRateLimit limit = new LoginRateLimit();
-        limit.setEmail(TEST_EMAIL);
+        LoginRateLimit limit = new LoginRateLimit(TEST_EMAIL);
         limit.setTokensRequested(MAX_TOKENS_REQUESTED);
         limit.setLastAttemptAt(Instant.now().minus(2, MINUTES));
 
@@ -77,10 +78,8 @@ class OtpServiceUnitTests {
     @Test
     void checkAndApplyRateLimit_Success_ResetsAfter20Minutes() {
         // Arrange
-        LoginRateLimit limit = new LoginRateLimit();
-        limit.setEmail(TEST_EMAIL);
+        LoginRateLimit limit = new LoginRateLimit(TEST_EMAIL);
         limit.setTokensRequested(MAX_TOKENS_REQUESTED);
-        limit.setBlockedUntil(null);
         limit.setLastAttemptAt(Instant.now().minus(25, MINUTES)); // MAGIA: Ultima încercare a fost acum 25 de minute!
 
         when(rateLimitRepository.findById(TEST_EMAIL)).thenReturn(Optional.of(limit));
@@ -96,8 +95,7 @@ class OtpServiceUnitTests {
     @Test
     void checkAndApplyRateLimit_Success_BlockHasExpired() {
         // Arrange
-        LoginRateLimit limit = new LoginRateLimit();
-        limit.setEmail(TEST_EMAIL);
+        LoginRateLimit limit = new LoginRateLimit(TEST_EMAIL);
         limit.setTokensRequested(MAX_TOKENS_REQUESTED);
         limit.setBlockedUntil(Instant.now().minus(2, MINUTES));
         limit.setLastAttemptAt(Instant.now().minus(BLOCK_DURATION_MINUTES + 2, MINUTES));
@@ -143,9 +141,7 @@ class OtpServiceUnitTests {
 
     @Test
     void validateAndConsumeOtp_ThrowsException_IfExpired() {
-        UserAuthToken expiredToken = new UserAuthToken();
-        expiredToken.setEmail(TEST_EMAIL);
-        expiredToken.setExpiresAt(Instant.now().minus(4, MINUTES));
+        UserAuthToken expiredToken = new UserAuthToken(TEST_EMAIL, "some_opt_hash", Instant.now().minus(4, MINUTES));
 
         when(authTokenRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.of(expiredToken));
 

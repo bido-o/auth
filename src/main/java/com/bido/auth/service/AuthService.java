@@ -4,6 +4,7 @@ import com.bido.auth.dto.AuthResponse;
 import com.bido.auth.entity.User;
 import com.bido.auth.entity.enums.UserRole;
 import com.bido.auth.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +20,7 @@ public class AuthService {
     private final OtpService otpService;
     private final TokenService tokenService;
 
+    @Autowired
     public AuthService(UserRepository userRepository, OtpService otpService, TokenService tokenService) {
         this.userRepository = userRepository;
         this.otpService = otpService;

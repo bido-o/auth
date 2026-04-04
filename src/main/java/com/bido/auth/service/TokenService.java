@@ -26,10 +26,7 @@ public class TokenService {
         String accessToken = jwtService.generateAccessToken(user);
         String refreshTokenValue = UUID.randomUUID().toString();
 
-        RefreshToken refreshToken = new RefreshToken();
-        refreshToken.setUser(user);
-        refreshToken.setToken(refreshTokenValue);
-        refreshToken.setExpiresAt(expirationDate);
+        RefreshToken refreshToken = new RefreshToken(user, refreshTokenValue, expirationDate);
 
         refreshTokenRepository.save(refreshToken);
 

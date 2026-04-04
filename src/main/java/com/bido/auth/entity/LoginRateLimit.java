@@ -12,12 +12,21 @@ public class LoginRateLimit {
     private String email;
 
     @Column(nullable = false)
-    private int tokensRequested = 0;
+    private int tokensRequested;
 
     private Instant blockedUntil;
 
     @Column(nullable = false)
     private Instant lastAttemptAt;
+
+    public LoginRateLimit(String email) {
+        this.email = email;
+        this.tokensRequested = 0;
+        lastAttemptAt = Instant.now();
+    }
+
+    public LoginRateLimit() {
+    }
 
     public String getEmail() {
         return email;

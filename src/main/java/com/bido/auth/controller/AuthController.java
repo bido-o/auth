@@ -2,8 +2,10 @@ package com.bido.auth.controller;
 
 import com.bido.auth.dto.AuthResponse;
 import com.bido.auth.dto.RefreshTokenRequest;
+import com.bido.auth.dto.RequestOtpRequest;
 import com.bido.auth.dto.VerifyOtpRequest;
 import com.bido.auth.service.AuthService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,18 +15,17 @@ public class AuthController {
 
     private final AuthService authService;
 
+    @Autowired
     public AuthController(AuthService authService) {
         this.authService = authService;
     }
 
-    // Endpoint 1: Frontend-ul cere trimiterea unui cod pe email
     @PostMapping("/request-otp")
-    public ResponseEntity<String> requestOtp(@RequestParam String email) {
-        authService.requestOtp(email);
+    public ResponseEntity<String> requestOtp(@RequestBody RequestOtpRequest request) {
+        authService.requestOtp(request.email());
         return ResponseEntity.ok("Dacă adresa este validă, un cod OTP a fost trimis.");
     }
 
-    // Endpoint 2: Frontend-ul trimite codul pentru validare
     @PostMapping("/verify-otp")
     public ResponseEntity<AuthResponse> verifyOtp(@RequestBody VerifyOtpRequest request) {
         AuthResponse response = authService.verifyOtp(request.email(), request.otpCode());

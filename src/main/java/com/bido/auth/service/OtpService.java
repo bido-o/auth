@@ -22,7 +22,8 @@ public class OtpService {
     private final UserAuthTokenRepository authTokenRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public OtpService(LoginRateLimitRepository rateLimitRepository, UserAuthTokenRepository authTokenRepository, PasswordEncoder passwordEncoder) {
+    public OtpService(LoginRateLimitRepository rateLimitRepository,
+                      UserAuthTokenRepository authTokenRepository, PasswordEncoder passwordEncoder) {
         this.rateLimitRepository = rateLimitRepository;
         this.authTokenRepository = authTokenRepository;
         this.passwordEncoder = passwordEncoder;
@@ -31,12 +32,7 @@ public class OtpService {
     @Transactional
     public void checkAndApplyRateLimit(String email) {
         LoginRateLimit rateLimit = rateLimitRepository.findById(email)
-                .orElseGet(() -> {
-                    LoginRateLimit newLimit = new LoginRateLimit();
-                    newLimit.setEmail(email);
-                    newLimit.setLastAttemptAt(Instant.now());
-                    return newLimit;
-                });
+                .orElseGet(() -> new LoginRateLimit(email));
 
         // is blocked
         if (rateLimit.getBlockedUntil() != null && Instant.now().isBefore(rateLimit.getBlockedUntil())) {
@@ -56,7 +52,8 @@ public class OtpService {
         if (rateLimit.getTokensRequested() > MAX_TOKENS_REQUESTED) {
             rateLimit.setBlockedUntil(Instant.now().plus(BLOCK_DURATION_MINUTES, MINUTES));
             rateLimitRepository.save(rateLimit);
-            throw new RuntimeException("Ai cerut prea multe coduri OTP. Te rugăm să încerci din nou peste o oră.");
+            throw new RuntimeException("Ai cerut prea multe coduri OTP. Te rugăm să încerci din nou peste o" +
+                    " oră.");
         }
 
         rateLimitRepository.save(rateLimit);
@@ -91,11 +88,8 @@ public class OtpService {
 
         authTokenRepository.deleteByEmail(email);
 
-        UserAuthToken authToken = new UserAuthToken();
-        authToken.setEmail(email);
-        authToken.setOtpCodeHash(hashedOtp);
-        authToken.setExpiresAt(Instant.now().plus(OTP_EXPIRATION_MINUTES, MINUTES));
-        authToken.setAttemptsCount(0);
+        UserAuthToken authToken = new UserAuthToken(email, hashedOtp,
+                Instant.now().plus(OTP_EXPIRATION_MINUTES, MINUTES));
 
         authTokenRepository.save(authToken);
 
