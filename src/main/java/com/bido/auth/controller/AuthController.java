@@ -22,7 +22,7 @@ public class AuthController {
 
     @PostMapping("/request-otp")
     public ResponseEntity<String> requestOtp(@RequestBody RequestOtpRequest request) {
-        authService.requestOtp(request.email());
+        authService.requestOtp(request.email(), request.role());
         return ResponseEntity.ok("Dacă adresa este validă, un cod OTP a fost trimis.");
     }
 

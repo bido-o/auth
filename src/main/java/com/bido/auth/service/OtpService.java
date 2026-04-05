@@ -58,7 +58,6 @@ public class OtpService {
         rateLimitRepository.save(rateLimit);
     }
 
-    // TODO: use attempts count from auth token
     @Transactional
     public void validateAndConsumeOtp(String email, String otpCode) {
         UserAuthToken authToken = authTokenRepository.findByEmail(email)

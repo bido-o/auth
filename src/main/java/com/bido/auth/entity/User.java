@@ -25,7 +25,7 @@ public class User {
     private UserRole role;
 
     @Column(nullable = false)
-    private boolean isSuspended = false;
+    private boolean isSuspended;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)

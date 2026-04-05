@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.Optional;
 
 import static com.bido.auth.utils.Statics.REFRESH_TOKEN_EXPIRATION_DAYS;
 import static java.time.temporal.ChronoUnit.DAYS;
@@ -28,16 +29,11 @@ public class AuthService {
     }
 
     @Transactional
-    public void requestOtp(String email) {
+    public void requestOtp(String email, UserRole role) {
 
         otpService.checkAndApplyRateLimit(email);
 
-        User user = userRepository.findByEmail(email)
-                .orElseGet(() -> userRepository.save(new User(email, UserRole.CLIENT)));
-
-        if (user.isSuspended()) {
-            throw new RuntimeException("Acest cont este suspendat!");
-        }
+        resolveAndValidateUser(email, role);
 
         otpService.generateAndSendOtp(email);
     }
@@ -60,5 +56,25 @@ public class AuthService {
     public AuthResponse refreshToken(String refreshTokenString) {
 
         return tokenService.refreshAccessToken(refreshTokenString);
+    }
+
+    private void resolveAndValidateUser(String email, UserRole role) {
+        Optional<User> userOpt = userRepository.findByEmail(email);
+
+        if (userOpt.isEmpty()) {
+            if (role == null) {
+                throw new RuntimeException("Contul nu există. Te rugăm să selectezi un rol pentru înregistrare.");
+            }
+
+            if (UserRole.ADMIN.equals(role)) {
+                throw new RuntimeException("Rolul de Administrator nu poate fi ales la înregistrare.");
+            }
+
+            userRepository.save(new User(email, role));
+        } else {
+            if (userOpt.get().isSuspended()) {
+                throw new RuntimeException("Acest cont este suspendat!");
+            }
+        }
     }
 }

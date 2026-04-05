@@ -30,20 +30,57 @@ class AuthServiceUnitTests {
     private final String TEST_EMAIL = "test@bido.ro";
 
     @Test
-    void requestOtp_Success() {
+    void requestOtp_Success_NewUser() {
         // Arrange
         doNothing().when(otpService).checkAndApplyRateLimit(TEST_EMAIL);
         when(userRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.empty());
-        when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArguments()[0]);
         doNothing().when(otpService).generateAndSendOtp(TEST_EMAIL);
 
         // Act
-        assertDoesNotThrow(() -> authService.requestOtp(TEST_EMAIL));
+        assertDoesNotThrow(() -> authService.requestOtp(TEST_EMAIL, UserRole.CLIENT));
 
         // Assert
-        verify(otpService).checkAndApplyRateLimit(TEST_EMAIL);
         verify(userRepository).save(any(User.class));
         verify(otpService).generateAndSendOtp(TEST_EMAIL);
+    }
+
+    @Test
+    void requestOtp_Success_ExistingUser() {
+        // Arrange
+        User existingUser = new User(TEST_EMAIL, UserRole.CLIENT);
+        when(userRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.of(existingUser));
+
+        // Act
+        assertDoesNotThrow(() -> authService.requestOtp(TEST_EMAIL, null));
+
+        // Assert
+        verify(userRepository, never()).save(any());
+        verify(otpService).generateAndSendOtp(TEST_EMAIL);
+    }
+
+    @Test
+    void requestOtp_ThrowsException_IfNewUserAndRoleMissing() {
+        // Arrange
+        when(userRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> authService.requestOtp(TEST_EMAIL, null));
+
+        assertEquals("Contul nu există. Te rugăm să selectezi un rol pentru înregistrare.", ex.getMessage());
+        verify(otpService, never()).generateAndSendOtp(anyString());
+    }
+
+    @Test
+    void requestOtp_ThrowsException_IfAdminRoleSelected() {
+        // Arrange
+        when(userRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> authService.requestOtp(TEST_EMAIL, UserRole.ADMIN));
+
+        assertEquals("Rolul de Administrator nu poate fi ales la înregistrare.", ex.getMessage());
     }
 
     @Test
@@ -51,11 +88,13 @@ class AuthServiceUnitTests {
         // Arrange
         User suspendedUser = new User(TEST_EMAIL, UserRole.CLIENT);
         suspendedUser.setSuspended(true);
-
         when(userRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.of(suspendedUser));
 
         // Act & Assert
-        assertThrows(RuntimeException.class, () -> authService.requestOtp(TEST_EMAIL));
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> authService.requestOtp(TEST_EMAIL, null));
+
+        assertEquals("Acest cont este suspendat!", ex.getMessage());
         verify(otpService, never()).generateAndSendOtp(anyString());
     }
 
