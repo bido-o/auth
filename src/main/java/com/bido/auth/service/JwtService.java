@@ -30,26 +30,28 @@ public class JwtService {
         this.secretKey = Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public String extractEmail(String token) {
+    public String extractUserId(String token) {
         return extractClaim(token, Claims::getSubject);
     }
 
     public String generateAccessToken(User user) {
         Map<String, Object> extraClaims = new HashMap<>();
-        extraClaims.put("role", user.getRole().name());
 
-        return buildToken(extraClaims, user.getEmail(), jwtExpiration);
+        extraClaims.put("role", user.getRole().name());
+        extraClaims.put("email", user.getEmail());
+
+        return buildToken(extraClaims, String.valueOf(user.getId()), jwtExpiration);
     }
 
     public boolean isTokenValid(String token, User user) {
-        final String email = extractEmail(token);
-        return (email.equals(user.getEmail())) && !isTokenExpired(token);
+        final String userId = extractUserId(token);
+        return (userId.equals(String.valueOf(user.getId()))) && !isTokenExpired(token);
     }
 
-    private String buildToken(Map<String, Object> extraClaims, String email, long expiration) {
+    private String buildToken(Map<String, Object> extraClaims, String userId, long expiration) {
         return Jwts.builder()
                 .claims(extraClaims)
-                .subject(email)
+                .subject(userId)
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(secretKey)
