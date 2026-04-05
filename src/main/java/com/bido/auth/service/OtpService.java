@@ -69,10 +69,17 @@ public class OtpService {
             throw new RuntimeException("Codul OTP a expirat. Te rugăm să ceri altul.");
         }
 
-        // if 3 attempts -> delete token and throw
-
         if (!passwordEncoder.matches(otpCode, authToken.getOtpCodeHash())) {
-            throw new RuntimeException("Cod OTP incorect!");
+            authToken.setAttemptsCount(authToken.getAttemptsCount() + 1);
+
+            if (authToken.getAttemptsCount() >= MAX_OTP_ATTEMPTS) {
+                authTokenRepository.delete(authToken);
+                throw new RuntimeException("Ai depășit limita de încercări (" + MAX_OTP_ATTEMPTS + "). Poți cere alt cod.");
+            } else {
+                authTokenRepository.save(authToken);
+                int remainingAttempts = MAX_OTP_ATTEMPTS - authToken.getAttemptsCount();
+                throw new RuntimeException("Cod OTP incorect! Mai ai " + remainingAttempts + " încercări.");
+            }
         }
 
         authTokenRepository.delete(authToken);

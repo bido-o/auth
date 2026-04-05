@@ -14,8 +14,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import java.time.Instant;
 import java.util.Optional;
 
-import static com.bido.auth.utils.Statics.BLOCK_DURATION_MINUTES;
-import static com.bido.auth.utils.Statics.MAX_TOKENS_REQUESTED;
+import static com.bido.auth.utils.Statics.*;
 import static java.time.temporal.ChronoUnit.MINUTES;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -80,7 +79,8 @@ class OtpServiceUnitTests {
         // Arrange
         LoginRateLimit limit = new LoginRateLimit(TEST_EMAIL);
         limit.setTokensRequested(MAX_TOKENS_REQUESTED);
-        limit.setLastAttemptAt(Instant.now().minus(25, MINUTES)); // MAGIA: Ultima încercare a fost acum 25 de minute!
+        limit.setLastAttemptAt(Instant.now().minus(25, MINUTES)); // MAGIA: Ultima încercare a fost acum 25
+        // de minute!
 
         when(rateLimitRepository.findById(TEST_EMAIL)).thenReturn(Optional.of(limit));
 
@@ -125,19 +125,46 @@ class OtpServiceUnitTests {
     }
 
     @Test
-    void validateAndConsumeOtp_ThrowsException_IfIncorrect() {
+    void validateAndConsumeOtp_ThrowsException_AndIncrementsAttempts_IfIncorrect() {
+        // Arrange
         UserAuthToken token = new UserAuthToken(TEST_EMAIL, "some_opt_hash", Instant.now().plus(4, MINUTES));
 
         when(authTokenRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.of(token));
         when(passwordEncoder.matches("wrong", "some_opt_hash")).thenReturn(false);
 
-        assertThrows(RuntimeException.class, () -> otpService.validateAndConsumeOtp(TEST_EMAIL, "wrong"));
+        // Act & Assert
+        RuntimeException exception = assertThrows(RuntimeException.class,
+                () -> otpService.validateAndConsumeOtp(TEST_EMAIL, "wrong"));
+
+        assertEquals("Cod OTP incorect! Mai ai " + (MAX_OTP_ATTEMPTS - 1) + " încercări.",
+                exception.getMessage());
+        assertEquals(1, token.getAttemptsCount());
+        verify(authTokenRepository).save(token);
         verify(authTokenRepository, never()).delete(any());
     }
 
     @Test
+    void validateAndConsumeOtp_ThrowsException_AndDeletesToken_IfMaxAttemptsReached() {
+        // Arrange
+        UserAuthToken token = new UserAuthToken(TEST_EMAIL, "some_opt_hash", Instant.now().plus(4, MINUTES));
+        token.setAttemptsCount(MAX_OTP_ATTEMPTS - 1);
+
+        when(authTokenRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.of(token));
+        when(passwordEncoder.matches("wrong", "some_opt_hash")).thenReturn(false);
+
+        // Act & Assert
+        RuntimeException exception = assertThrows(RuntimeException.class,
+                () -> otpService.validateAndConsumeOtp(TEST_EMAIL, "wrong"));
+
+        assertTrue(exception.getMessage().contains("Ai depășit limita de încercări"));
+        assertEquals(MAX_OTP_ATTEMPTS, token.getAttemptsCount());
+        verify(authTokenRepository).delete(token);
+    }
+
+    @Test
     void validateAndConsumeOtp_ThrowsException_IfExpired() {
-        UserAuthToken expiredToken = new UserAuthToken(TEST_EMAIL, "some_opt_hash", Instant.now().minus(4, MINUTES));
+        UserAuthToken expiredToken = new UserAuthToken(TEST_EMAIL, "some_opt_hash", Instant.now().minus(4,
+                MINUTES));
 
         when(authTokenRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.of(expiredToken));
 
