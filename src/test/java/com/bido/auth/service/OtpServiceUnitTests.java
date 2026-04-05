@@ -113,12 +113,10 @@ class OtpServiceUnitTests {
 
     @Test
     void validateAndConsumeOtp_Success() {
-        UserAuthToken token = new UserAuthToken();
-        token.setOtpCodeHash("hash");
-        token.setExpiresAt(Instant.now().plus(4, MINUTES));
+        UserAuthToken token = new UserAuthToken(TEST_EMAIL, "some_opt_hash", Instant.now().plus(4, MINUTES));
 
         when(authTokenRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.of(token));
-        when(passwordEncoder.matches("123456", "hash")).thenReturn(true);
+        when(passwordEncoder.matches("123456", "some_opt_hash")).thenReturn(true);
 
         assertDoesNotThrow(() -> otpService.validateAndConsumeOtp(TEST_EMAIL, "123456"));
 
@@ -128,12 +126,10 @@ class OtpServiceUnitTests {
 
     @Test
     void validateAndConsumeOtp_ThrowsException_IfIncorrect() {
-        UserAuthToken token = new UserAuthToken();
-        token.setOtpCodeHash("hash");
-        token.setExpiresAt(Instant.now().plus(4, MINUTES));
+        UserAuthToken token = new UserAuthToken(TEST_EMAIL, "some_opt_hash", Instant.now().plus(4, MINUTES));
 
         when(authTokenRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.of(token));
-        when(passwordEncoder.matches("wrong", "hash")).thenReturn(false);
+        when(passwordEncoder.matches("wrong", "some_opt_hash")).thenReturn(false);
 
         assertThrows(RuntimeException.class, () -> otpService.validateAndConsumeOtp(TEST_EMAIL, "wrong"));
         verify(authTokenRepository, never()).delete(any());

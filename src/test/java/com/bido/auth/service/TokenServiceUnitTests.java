@@ -50,10 +50,7 @@ class TokenServiceUnitTests {
         User user = new User("test@bido.ro", UserRole.CLIENT);
         Instant originalExp = Instant.now().plus(20, DAYS);
 
-        RefreshToken oldToken = new RefreshToken();
-        oldToken.setToken("old_uuid");
-        oldToken.setUser(user);
-        oldToken.setExpiresAt(originalExp);
+        RefreshToken oldToken = new RefreshToken(user, "old_uuid", originalExp);
 
         when(refreshTokenRepository.findByToken("old_uuid")).thenReturn(Optional.of(oldToken));
         when(jwtService.generateAccessToken(user)).thenReturn("new_jwt");

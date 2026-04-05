@@ -17,7 +17,6 @@ import static java.time.temporal.ChronoUnit.MINUTES;
 @Service
 public class OtpService {
 
-
     private final LoginRateLimitRepository rateLimitRepository;
     private final UserAuthTokenRepository authTokenRepository;
     private final PasswordEncoder passwordEncoder;
@@ -77,7 +76,6 @@ public class OtpService {
         }
 
         authTokenRepository.delete(authToken);
-
         rateLimitRepository.deleteById(email);
     }
 
