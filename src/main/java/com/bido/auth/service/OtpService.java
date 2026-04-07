@@ -4,7 +4,8 @@ import com.bido.auth.entity.LoginRateLimit;
 import com.bido.auth.entity.UserAuthToken;
 import com.bido.auth.repository.LoginRateLimitRepository;
 import com.bido.auth.repository.UserAuthTokenRepository;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.mindrot.jbcrypt.BCrypt;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,13 +20,11 @@ public class OtpService {
 
     private final LoginRateLimitRepository rateLimitRepository;
     private final UserAuthTokenRepository authTokenRepository;
-    private final PasswordEncoder passwordEncoder;
 
-    public OtpService(LoginRateLimitRepository rateLimitRepository,
-                      UserAuthTokenRepository authTokenRepository, PasswordEncoder passwordEncoder) {
+    @Autowired
+    public OtpService(LoginRateLimitRepository rateLimitRepository, UserAuthTokenRepository authTokenRepository) {
         this.rateLimitRepository = rateLimitRepository;
         this.authTokenRepository = authTokenRepository;
-        this.passwordEncoder = passwordEncoder;
     }
 
     @Transactional
@@ -68,7 +67,7 @@ public class OtpService {
             throw new RuntimeException("Codul OTP a expirat. Te rugăm să ceri altul.");
         }
 
-        if (!passwordEncoder.matches(otpCode, authToken.getOtpCodeHash())) {
+        if (!BCrypt.checkpw(otpCode, authToken.getOtpCodeHash())) {
             authToken.setAttemptsCount(authToken.getAttemptsCount() + 1);
 
             if (authToken.getAttemptsCount() >= MAX_OTP_ATTEMPTS) {
@@ -88,7 +87,7 @@ public class OtpService {
     @Transactional
     public void generateAndSendOtp(String email) {
         String otpCode = generateSecureOtp();
-        String hashedOtp = passwordEncoder.encode(otpCode);
+        String hashedOtp = BCrypt.hashpw(otpCode, BCrypt.gensalt());
 
         authTokenRepository.deleteByEmail(email);
 

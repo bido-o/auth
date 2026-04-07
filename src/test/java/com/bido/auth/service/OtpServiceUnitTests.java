@@ -9,10 +9,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.Instant;
 import java.util.Optional;
+import org.mindrot.jbcrypt.BCrypt;
 
 import static com.bido.auth.utils.Statics.*;
 import static java.time.temporal.ChronoUnit.MINUTES;
@@ -27,9 +27,6 @@ class OtpServiceUnitTests {
 
     @Mock
     private UserAuthTokenRepository authTokenRepository;
-
-    @Mock
-    private PasswordEncoder passwordEncoder;
 
     @InjectMocks
     private OtpService otpService;
@@ -113,12 +110,13 @@ class OtpServiceUnitTests {
 
     @Test
     void validateAndConsumeOtp_Success() {
-        UserAuthToken token = new UserAuthToken(TEST_EMAIL, "some_opt_hash", Instant.now().plus(4, MINUTES));
+        String rawOtp = "123456";
+        String hashedOtp = BCrypt.hashpw(rawOtp, BCrypt.gensalt());
+        UserAuthToken token = new UserAuthToken(TEST_EMAIL, hashedOtp, Instant.now().plus(4, MINUTES));
 
         when(authTokenRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.of(token));
-        when(passwordEncoder.matches("123456", "some_opt_hash")).thenReturn(true);
 
-        assertDoesNotThrow(() -> otpService.validateAndConsumeOtp(TEST_EMAIL, "123456"));
+        assertDoesNotThrow(() -> otpService.validateAndConsumeOtp(TEST_EMAIL, rawOtp));
 
         verify(authTokenRepository).delete(token);
         verify(rateLimitRepository).deleteById(TEST_EMAIL);
@@ -127,10 +125,10 @@ class OtpServiceUnitTests {
     @Test
     void validateAndConsumeOtp_ThrowsException_AndIncrementsAttempts_IfIncorrect() {
         // Arrange
-        UserAuthToken token = new UserAuthToken(TEST_EMAIL, "some_opt_hash", Instant.now().plus(4, MINUTES));
+        String hashedOtp = BCrypt.hashpw("real_otp", BCrypt.gensalt());
+        UserAuthToken token = new UserAuthToken(TEST_EMAIL, hashedOtp, Instant.now().plus(4, MINUTES));
 
         when(authTokenRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.of(token));
-        when(passwordEncoder.matches("wrong", "some_opt_hash")).thenReturn(false);
 
         // Act & Assert
         RuntimeException exception = assertThrows(RuntimeException.class,
@@ -146,11 +144,11 @@ class OtpServiceUnitTests {
     @Test
     void validateAndConsumeOtp_ThrowsException_AndDeletesToken_IfMaxAttemptsReached() {
         // Arrange
-        UserAuthToken token = new UserAuthToken(TEST_EMAIL, "some_opt_hash", Instant.now().plus(4, MINUTES));
+        String hashedOtp = BCrypt.hashpw("real_otp", BCrypt.gensalt());
+        UserAuthToken token = new UserAuthToken(TEST_EMAIL, hashedOtp, Instant.now().plus(4, MINUTES));
         token.setAttemptsCount(MAX_OTP_ATTEMPTS - 1);
 
         when(authTokenRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.of(token));
-        when(passwordEncoder.matches("wrong", "some_opt_hash")).thenReturn(false);
 
         // Act & Assert
         RuntimeException exception = assertThrows(RuntimeException.class,
@@ -179,8 +177,6 @@ class OtpServiceUnitTests {
 
     @Test
     void generateAndSendOtp_Success() {
-        // Arrange
-        when(passwordEncoder.encode(anyString())).thenReturn("hashed_otp");
 
         // Act
         assertDoesNotThrow(() -> otpService.generateAndSendOtp(TEST_EMAIL));
