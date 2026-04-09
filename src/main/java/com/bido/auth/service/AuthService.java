@@ -3,6 +3,10 @@ package com.bido.auth.service;
 import com.bido.auth.dto.AuthResponse;
 import com.bido.auth.entity.User;
 import com.bido.auth.entity.enums.UserRole;
+import com.bido.auth.exception.AccountSuspendedException;
+import com.bido.auth.exception.InvalidOtpException;
+import com.bido.auth.exception.InvalidRoleException;
+import com.bido.auth.exception.RateLimitException;
 import com.bido.auth.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -28,17 +32,15 @@ public class AuthService {
         this.tokenService = tokenService;
     }
 
-    @Transactional
+    @Transactional(noRollbackFor = RateLimitException.class)
     public void requestOtp(String email, UserRole role) {
 
-        otpService.checkAndApplyRateLimit(email);
-
         resolveAndValidateUser(email, role);
-
+        otpService.checkAndApplyRateLimit(email);
         otpService.generateAndSendOtp(email);
     }
 
-    @Transactional
+    @Transactional(noRollbackFor = InvalidOtpException.class)
     public AuthResponse verifyOtp(String email, String otpCode) {
 
         otpService.validateAndConsumeOtp(email, otpCode);
@@ -63,17 +65,17 @@ public class AuthService {
 
         if (userOpt.isEmpty()) {
             if (role == null) {
-                throw new RuntimeException("Contul nu există. Te rugăm să selectezi un rol pentru înregistrare.");
+                throw new InvalidRoleException("Contul nu există. Te rugăm să selectezi un rol pentru înregistrare.");
             }
 
             if (UserRole.ADMIN.equals(role)) {
-                throw new RuntimeException("Rolul de Administrator nu poate fi ales la înregistrare.");
+                throw new InvalidRoleException("Rolul de Administrator nu poate fi ales la înregistrare.");
             }
 
             userRepository.save(new User(email, role));
         } else {
             if (userOpt.get().isSuspended()) {
-                throw new RuntimeException("Acest cont este suspendat!");
+                throw new AccountSuspendedException("Acest cont este suspendat!");
             }
         }
     }

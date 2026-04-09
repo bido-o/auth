@@ -2,6 +2,8 @@ package com.bido.auth.service;
 
 import com.bido.auth.entity.LoginRateLimit;
 import com.bido.auth.entity.UserAuthToken;
+import com.bido.auth.exception.InvalidOtpException;
+import com.bido.auth.exception.RateLimitException;
 import com.bido.auth.repository.LoginRateLimitRepository;
 import com.bido.auth.repository.UserAuthTokenRepository;
 import org.junit.jupiter.api.Test;
@@ -56,7 +58,7 @@ class OtpServiceUnitTests {
 
         when(rateLimitRepository.findById(TEST_EMAIL)).thenReturn(Optional.of(limit));
 
-        assertThrows(RuntimeException.class, () -> otpService.checkAndApplyRateLimit(TEST_EMAIL));
+        assertThrows(RateLimitException.class, () -> otpService.checkAndApplyRateLimit(TEST_EMAIL));
     }
 
     @Test
@@ -67,7 +69,7 @@ class OtpServiceUnitTests {
 
         when(rateLimitRepository.findById(TEST_EMAIL)).thenReturn(Optional.of(limit));
 
-        assertThrows(RuntimeException.class, () -> otpService.checkAndApplyRateLimit(TEST_EMAIL));
+        assertThrows(RateLimitException.class, () -> otpService.checkAndApplyRateLimit(TEST_EMAIL));
         assertNotNull(limit.getBlockedUntil());
     }
 
@@ -131,7 +133,7 @@ class OtpServiceUnitTests {
         when(authTokenRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.of(token));
 
         // Act & Assert
-        RuntimeException exception = assertThrows(RuntimeException.class,
+        InvalidOtpException exception = assertThrows(InvalidOtpException.class,
                 () -> otpService.validateAndConsumeOtp(TEST_EMAIL, "wrong"));
 
         assertEquals("Cod OTP incorect! Mai ai " + (MAX_OTP_ATTEMPTS - 1) + " încercări.",
@@ -151,7 +153,7 @@ class OtpServiceUnitTests {
         when(authTokenRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.of(token));
 
         // Act & Assert
-        RuntimeException exception = assertThrows(RuntimeException.class,
+        InvalidOtpException exception = assertThrows(InvalidOtpException.class,
                 () -> otpService.validateAndConsumeOtp(TEST_EMAIL, "wrong"));
 
         assertTrue(exception.getMessage().contains("Ai depășit limita de încercări"));
@@ -167,7 +169,7 @@ class OtpServiceUnitTests {
         when(authTokenRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.of(expiredToken));
 
         // Act & Assert
-        RuntimeException exception = assertThrows(RuntimeException.class,
+        InvalidOtpException exception = assertThrows(InvalidOtpException.class,
                 () -> otpService.validateAndConsumeOtp(TEST_EMAIL, "123456"));
 
         assertEquals("Codul OTP a expirat. Te rugăm să ceri altul.", exception.getMessage());

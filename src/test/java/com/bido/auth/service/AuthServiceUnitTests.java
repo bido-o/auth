@@ -3,6 +3,8 @@ package com.bido.auth.service;
 import com.bido.auth.dto.AuthResponse;
 import com.bido.auth.entity.User;
 import com.bido.auth.entity.enums.UserRole;
+import com.bido.auth.exception.AccountSuspendedException;
+import com.bido.auth.exception.InvalidRoleException;
 import com.bido.auth.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -64,7 +66,7 @@ class AuthServiceUnitTests {
         when(userRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.empty());
 
         // Act & Assert
-        RuntimeException ex = assertThrows(RuntimeException.class,
+        InvalidRoleException ex = assertThrows(InvalidRoleException.class,
                 () -> authService.requestOtp(TEST_EMAIL, null));
 
         assertEquals("Contul nu există. Te rugăm să selectezi un rol pentru înregistrare.", ex.getMessage());
@@ -77,7 +79,7 @@ class AuthServiceUnitTests {
         when(userRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.empty());
 
         // Act & Assert
-        RuntimeException ex = assertThrows(RuntimeException.class,
+        InvalidRoleException ex = assertThrows(InvalidRoleException.class,
                 () -> authService.requestOtp(TEST_EMAIL, UserRole.ADMIN));
 
         assertEquals("Rolul de Administrator nu poate fi ales la înregistrare.", ex.getMessage());
@@ -91,7 +93,7 @@ class AuthServiceUnitTests {
         when(userRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.of(suspendedUser));
 
         // Act & Assert
-        RuntimeException ex = assertThrows(RuntimeException.class,
+        AccountSuspendedException ex = assertThrows(AccountSuspendedException.class,
                 () -> authService.requestOtp(TEST_EMAIL, null));
 
         assertEquals("Acest cont este suspendat!", ex.getMessage());

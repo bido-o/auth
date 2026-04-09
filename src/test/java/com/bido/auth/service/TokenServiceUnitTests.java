@@ -4,6 +4,7 @@ import com.bido.auth.dto.AuthResponse;
 import com.bido.auth.entity.RefreshToken;
 import com.bido.auth.entity.User;
 import com.bido.auth.entity.enums.UserRole;
+import com.bido.auth.exception.InvalidTokenException;
 import com.bido.auth.repository.RefreshTokenRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -75,7 +76,7 @@ class TokenServiceUnitTests {
 
         when(refreshTokenRepository.findByToken("old_uuid")).thenReturn(Optional.of(oldToken));
 
-        assertThrows(RuntimeException.class, () -> tokenService.refreshAccessToken("old_uuid"));
+        assertThrows(InvalidTokenException.class, () -> tokenService.refreshAccessToken("old_uuid"));
         verify(refreshTokenRepository).delete(oldToken);
     }
 }
