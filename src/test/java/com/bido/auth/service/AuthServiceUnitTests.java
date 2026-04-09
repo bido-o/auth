@@ -19,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+//TODO: refine error messages (ErrorMessages class)
 @ExtendWith(MockitoExtension.class)
 class AuthServiceUnitTests {
 

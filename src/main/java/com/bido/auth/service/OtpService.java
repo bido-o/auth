@@ -38,7 +38,7 @@ public class OtpService {
         // is blocked
         if (rateLimit.getBlockedUntil() != null && Instant.now().isBefore(rateLimit.getBlockedUntil())) {
             long minutesLeft = MINUTES.between(Instant.now(), rateLimit.getBlockedUntil());
-            throw new RateLimitException(String.format(ErrorMessages.RATE_LIMIT_BLOCKED, minutesLeft));
+            throw new RateLimitException(ErrorMessages.RATE_LIMIT_BLOCKED.formatted(minutesLeft));
         }
 
         // > 20 min from last attempt passed
@@ -77,7 +77,7 @@ public class OtpService {
             } else {
                 authTokenRepository.save(authToken);
                 int remainingAttempts = MAX_OTP_ATTEMPTS - authToken.getAttemptsCount();
-                throw new InvalidOtpException(String.format(ErrorMessages.OTP_INCORRECT, remainingAttempts));
+                throw new InvalidOtpException(ErrorMessages.OTP_INCORRECT.formatted(remainingAttempts));
             }
         }
 

@@ -1,9 +1,6 @@
 package com.bido.auth.controller;
 
-import com.bido.auth.dto.AuthResponse;
-import com.bido.auth.dto.RefreshTokenRequest;
-import com.bido.auth.dto.RequestOtpRequest;
-import com.bido.auth.dto.VerifyOtpRequest;
+import com.bido.auth.dto.*;
 import com.bido.auth.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -11,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
-public class AuthController {
+public class AuthController implements AuthApiDocs {
 
     private final AuthService authService;
 
@@ -21,9 +18,9 @@ public class AuthController {
     }
 
     @PostMapping("/request-otp")
-    public ResponseEntity<String> requestOtp(@RequestBody RequestOtpRequest request) {
+    public ResponseEntity<Void> requestOtp(@RequestBody RequestOtpRequest request) {
         authService.requestOtp(request.email(), request.role());
-        return ResponseEntity.ok("Dacă adresa este validă, un cod OTP a fost trimis.");
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/verify-otp")
