@@ -4,10 +4,11 @@ import com.bido.auth.dto.AuthResponse;
 import com.bido.auth.entity.User;
 import com.bido.auth.entity.enums.UserRole;
 import com.bido.auth.exception.AccountSuspendedException;
-import com.bido.auth.exception.InvalidOtpException;
 import com.bido.auth.exception.InvalidRoleException;
 import com.bido.auth.exception.RateLimitException;
+import com.bido.auth.exception.InvalidOtpException;
 import com.bido.auth.repository.UserRepository;
+import com.bido.auth.utils.ErrorMessages;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -65,17 +66,17 @@ public class AuthService {
 
         if (userOpt.isEmpty()) {
             if (role == null) {
-                throw new InvalidRoleException("Contul nu există. Te rugăm să selectezi un rol pentru înregistrare.");
+                throw new InvalidRoleException(ErrorMessages.ROLE_MISSING);
             }
 
             if (UserRole.ADMIN.equals(role)) {
-                throw new InvalidRoleException("Rolul de Administrator nu poate fi ales la înregistrare.");
+                throw new InvalidRoleException(ErrorMessages.ROLE_ADMIN_INVALID);
             }
 
             userRepository.save(new User(email, role));
         } else {
             if (userOpt.get().isSuspended()) {
-                throw new AccountSuspendedException("Acest cont este suspendat!");
+                throw new AccountSuspendedException(ErrorMessages.ACCOUNT_SUSPENDED);
             }
         }
     }

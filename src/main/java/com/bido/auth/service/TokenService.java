@@ -5,6 +5,7 @@ import com.bido.auth.entity.RefreshToken;
 import com.bido.auth.entity.User;
 import com.bido.auth.exception.InvalidTokenException;
 import com.bido.auth.repository.RefreshTokenRepository;
+import com.bido.auth.utils.ErrorMessages;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,11 +38,11 @@ public class TokenService {
     @Transactional(noRollbackFor = InvalidTokenException.class)
     public AuthResponse refreshAccessToken(String oldRefreshTokenString) {
         RefreshToken oldRefreshToken = refreshTokenRepository.findByToken(oldRefreshTokenString)
-                .orElseThrow(() -> new InvalidTokenException("Refresh Token invalid sau inexistent!"));
+                .orElseThrow(() -> new InvalidTokenException(ErrorMessages.TOKEN_REFRESH_INVALID));
 
         if (oldRefreshToken.getExpiresAt().isBefore(Instant.now())) {
             refreshTokenRepository.delete(oldRefreshToken);
-            throw new InvalidTokenException("Sesiunea a expirat. Te rugăm să te loghezi din nou.");
+            throw new InvalidTokenException(ErrorMessages.TOKEN_EXPIRED);
         }
 
         User user = oldRefreshToken.getUser();

@@ -6,6 +6,7 @@ import com.bido.auth.exception.InvalidOtpException;
 import com.bido.auth.exception.RateLimitException;
 import com.bido.auth.repository.LoginRateLimitRepository;
 import com.bido.auth.repository.UserAuthTokenRepository;
+import com.bido.auth.utils.ErrorMessages;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -37,7 +38,7 @@ public class OtpService {
         // is blocked
         if (rateLimit.getBlockedUntil() != null && Instant.now().isBefore(rateLimit.getBlockedUntil())) {
             long minutesLeft = MINUTES.between(Instant.now(), rateLimit.getBlockedUntil());
-            throw new RateLimitException("Prea multe încercări. Cont blocat temporar pentru încă " + minutesLeft + " minute.");
+            throw new RateLimitException(String.format(ErrorMessages.RATE_LIMIT_BLOCKED, minutesLeft));
         }
 
         // > 20 min from last attempt passed
@@ -52,8 +53,7 @@ public class OtpService {
         if (rateLimit.getTokensRequested() > MAX_TOKENS_REQUESTED) {
             rateLimit.setBlockedUntil(Instant.now().plus(BLOCK_DURATION_MINUTES, MINUTES));
             rateLimitRepository.save(rateLimit);
-            throw new RateLimitException("Ai cerut prea multe coduri OTP. Te rugăm să încerci din nou peste o" +
-                    " oră.");
+            throw new RateLimitException(ErrorMessages.RATE_LIMIT_TOKENS);
         }
 
         rateLimitRepository.save(rateLimit);
@@ -62,23 +62,22 @@ public class OtpService {
     @Transactional(noRollbackFor = InvalidOtpException.class)
     public void validateAndConsumeOtp(String email, String otpCode) {
         UserAuthToken authToken = authTokenRepository.findByEmail(email)
-                .orElseThrow(() -> new InvalidOtpException("Nu a fost cerut niciun cod pentru acest email!"));
+                .orElseThrow(() -> new InvalidOtpException(ErrorMessages.OTP_NOT_REQUESTED));
 
         if (authToken.getExpiresAt().isBefore(Instant.now())) {
             authTokenRepository.delete(authToken);
-            throw new InvalidOtpException("Codul OTP a expirat. Te rugăm să ceri altul.");
+            throw new InvalidOtpException(ErrorMessages.OTP_EXPIRED);
         }
 
         if (!BCrypt.checkpw(otpCode, authToken.getOtpCodeHash())) {
             authToken.setAttemptsCount(authToken.getAttemptsCount() + 1);
-
             if (authToken.getAttemptsCount() >= MAX_OTP_ATTEMPTS) {
                 authTokenRepository.delete(authToken);
-                throw new InvalidOtpException("Ai depășit limita de încercări (" + MAX_OTP_ATTEMPTS + "). Poți cere alt cod.");
+                throw new InvalidOtpException(ErrorMessages.OTP_MAX_ATTEMPTS);
             } else {
                 authTokenRepository.save(authToken);
                 int remainingAttempts = MAX_OTP_ATTEMPTS - authToken.getAttemptsCount();
-                throw new InvalidOtpException("Cod OTP incorect! Mai ai " + remainingAttempts + " încercări.");
+                throw new InvalidOtpException(String.format(ErrorMessages.OTP_INCORRECT, remainingAttempts));
             }
         }
 
