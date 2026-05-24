@@ -9,3 +9,15 @@ jwt:
   secret: ${JWT_SECRET_KEY}
   access-token:
     expiration: 900000 # 15 minute
+
+management:
+  tracing:
+    sampling:
+      probability: 1.0
+    export:
+      zipkin:
+        endpoint: ${ZIPKIN_ENDPOINT:http://localhost:9411/api/v2/spans}
+
+logging:
+  pattern:
+    level: "%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]"
