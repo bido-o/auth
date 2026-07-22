@@ -8,6 +8,7 @@ import com.bido.auth.exception.InvalidRoleException;
 import com.bido.auth.exception.RateLimitException;
 import com.bido.auth.exception.InvalidOtpException;
 import com.bido.auth.repository.UserRepository;
+import com.bido.auth.utils.ErrorCodes;
 import com.bido.auth.utils.ErrorMessages;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -66,11 +67,11 @@ public class AuthService {
 
         if (userOpt.isEmpty()) {
             if (role == null) {
-                throw new InvalidRoleException(ErrorMessages.ROLE_MISSING);
+                throw new InvalidRoleException(ErrorCodes.ROLE_MISSING, ErrorMessages.ROLE_MISSING);
             }
 
             if (UserRole.ADMIN.equals(role)) {
-                throw new InvalidRoleException(ErrorMessages.ROLE_ADMIN_INVALID);
+                throw new InvalidRoleException(ErrorCodes.ROLE_ADMIN_INVALID, ErrorMessages.ROLE_ADMIN_INVALID);
             }
 
             userRepository.save(new User(email, role));

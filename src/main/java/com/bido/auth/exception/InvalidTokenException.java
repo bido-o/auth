@@ -1,11 +1,10 @@
 package com.bido.auth.exception;
 
+import com.bido.auth.utils.ErrorCodes;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
 
-@ResponseStatus(HttpStatus.UNAUTHORIZED)
-public class InvalidTokenException extends RuntimeException {
+public class InvalidTokenException extends AppException {
     public InvalidTokenException(String message) {
-        super(message);
+        super(ErrorCodes.INVALID_TOKEN, message, HttpStatus.UNAUTHORIZED);
     }
 }

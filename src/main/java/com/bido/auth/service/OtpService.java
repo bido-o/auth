@@ -6,6 +6,7 @@ import com.bido.auth.exception.InvalidOtpException;
 import com.bido.auth.exception.RateLimitException;
 import com.bido.auth.repository.LoginRateLimitRepository;
 import com.bido.auth.repository.UserAuthTokenRepository;
+import com.bido.auth.utils.ErrorCodes;
 import com.bido.auth.utils.ErrorMessages;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,7 +39,7 @@ public class OtpService {
         // is blocked
         if (rateLimit.getBlockedUntil() != null && Instant.now().isBefore(rateLimit.getBlockedUntil())) {
             long minutesLeft = MINUTES.between(Instant.now(), rateLimit.getBlockedUntil());
-            throw new RateLimitException(ErrorMessages.RATE_LIMIT_BLOCKED.formatted(minutesLeft));
+            throw new RateLimitException(ErrorCodes.RATE_LIMIT_BLOCKED, ErrorMessages.RATE_LIMIT_BLOCKED.formatted(minutesLeft));
         }
 
         // > 20 min from last attempt passed
@@ -53,7 +54,7 @@ public class OtpService {
         if (rateLimit.getTokensRequested() > MAX_TOKENS_REQUESTED) {
             rateLimit.setBlockedUntil(Instant.now().plus(BLOCK_DURATION_MINUTES, MINUTES));
             rateLimitRepository.save(rateLimit);
-            throw new RateLimitException(ErrorMessages.RATE_LIMIT_TOKENS);
+            throw new RateLimitException(ErrorCodes.RATE_LIMIT_OTP, ErrorMessages.RATE_LIMIT_TOKENS);
         }
 
         rateLimitRepository.save(rateLimit);
