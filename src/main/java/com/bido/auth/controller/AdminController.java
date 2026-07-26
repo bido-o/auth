@@ -1,29 +1,30 @@
 package com.bido.auth.controller;
 
+import com.bido.auth.dto.AdminUserListDto;
 import com.bido.auth.security.AuthContext;
+import com.bido.auth.service.AdminService;
 import com.bido.auth.service.SuspensionService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/auth/admin")
 public class AdminController {
 
+    private final AdminService adminService;
     private final SuspensionService suspensionService;
 
-    public AdminController(SuspensionService suspensionService) {
+    public AdminController(AdminService adminService, SuspensionService suspensionService) {
+        this.adminService = adminService;
         this.suspensionService = suspensionService;
     }
 
-    /**
-     * Confirmă că apelantul chiar e admin: 200 pentru ADMIN, 403 altfel
-     * (401 dacă gateway-ul respinge tokenul). Frontend-ul îl folosește ca
-     * verificare autoritativă — el nu poate valida semnătura JWT.
-     */
-    @GetMapping("/me")
-    public ResponseEntity<Void> me(AuthContext auth) {
+    @GetMapping("/users")
+    public ResponseEntity<List<AdminUserListDto>> listUsers(AuthContext auth) {
         auth.requireAdmin();
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(adminService.listManagedUsers());
     }
 
     @PostMapping("/users/{userId}/suspend")
