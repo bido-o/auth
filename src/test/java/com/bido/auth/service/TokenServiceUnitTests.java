@@ -4,6 +4,7 @@ import com.bido.auth.dto.AuthResponse;
 import com.bido.auth.entity.RefreshToken;
 import com.bido.auth.entity.User;
 import com.bido.auth.entity.enums.UserRole;
+import com.bido.auth.exception.AccountSuspendedException;
 import com.bido.auth.exception.InvalidTokenException;
 import com.bido.auth.repository.RefreshTokenRepository;
 import org.junit.jupiter.api.Test;
@@ -78,5 +79,29 @@ class TokenServiceUnitTests {
 
         assertThrows(InvalidTokenException.class, () -> tokenService.refreshAccessToken("old_uuid"));
         verify(refreshTokenRepository).delete(oldToken);
+    }
+
+    /**
+     * Blocarea permanentă: chiar cu un refresh token valid și neexpirat, un cont
+     * suspendat nu mai primește tokeni noi. E plasa de siguranță de după expirarea
+     * denylist-ului Redis, care acoperă doar durata access token-ului.
+     */
+    @Test
+    void refreshAccessToken_ThrowsException_IfSuspended() {
+        User suspendedUser = new User("test@bido.ro", UserRole.CLIENT);
+        suspendedUser.setSuspended(true);
+
+        RefreshToken oldToken = new RefreshToken(suspendedUser, "old_uuid", Instant.now().plus(20, DAYS));
+
+        when(refreshTokenRepository.findByToken("old_uuid")).thenReturn(Optional.of(oldToken));
+
+        AccountSuspendedException ex = assertThrows(AccountSuspendedException.class,
+                () -> tokenService.refreshAccessToken("old_uuid"));
+
+        assertEquals("Acest cont este suspendat!", ex.getMessage());
+
+        // Nu se emite nicio pereche nouă de tokeni.
+        verify(refreshTokenRepository, never()).save(any(RefreshToken.class));
+        verifyNoInteractions(jwtService);
     }
 }

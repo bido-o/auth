@@ -14,5 +14,7 @@ public final class ErrorMessages {
     public static final String RATE_LIMIT_BLOCKED = "Prea multe încercări. Cont blocat temporar pentru încă %d minute.";
     public static final String TOKEN_REFRESH_INVALID = "Refresh Token invalid sau inexistent!";
     public static final String TOKEN_EXPIRED = "Sesiunea a expirat. Te rugăm să te loghezi din nou.";
+    public static final String USER_NOT_FOUND = "Utilizatorul nu a fost găsit.";
+    public static final String ADMIN_ONLY = "Acțiune permisă doar administratorilor.";
 }
 
