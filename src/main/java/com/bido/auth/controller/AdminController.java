@@ -15,6 +15,17 @@ public class AdminController {
         this.suspensionService = suspensionService;
     }
 
+    /**
+     * Confirmă că apelantul chiar e admin: 200 pentru ADMIN, 403 altfel
+     * (401 dacă gateway-ul respinge tokenul). Frontend-ul îl folosește ca
+     * verificare autoritativă — el nu poate valida semnătura JWT.
+     */
+    @GetMapping("/me")
+    public ResponseEntity<Void> me(AuthContext auth) {
+        auth.requireAdmin();
+        return ResponseEntity.ok().build();
+    }
+
     @PostMapping("/users/{userId}/suspend")
     public ResponseEntity<Void> suspend(@PathVariable Long userId, AuthContext auth) {
         auth.requireAdmin();
