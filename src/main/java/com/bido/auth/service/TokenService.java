@@ -3,6 +3,7 @@ package com.bido.auth.service;
 import com.bido.auth.dto.AuthResponse;
 import com.bido.auth.entity.RefreshToken;
 import com.bido.auth.entity.User;
+import com.bido.auth.exception.AccountSuspendedException;
 import com.bido.auth.exception.InvalidTokenException;
 import com.bido.auth.repository.RefreshTokenRepository;
 import com.bido.auth.utils.ErrorMessages;
@@ -46,6 +47,11 @@ public class TokenService {
         }
 
         User user = oldRefreshToken.getUser();
+
+        // Blocare permanentă: un cont suspendat nu-și mai poate reînnoi sesiunea.
+        if (user.isSuspended()) {
+            throw new AccountSuspendedException(ErrorMessages.ACCOUNT_SUSPENDED);
+        }
 
         refreshTokenRepository.delete(oldRefreshToken);
 

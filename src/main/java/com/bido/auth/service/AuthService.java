@@ -3,10 +3,7 @@ package com.bido.auth.service;
 import com.bido.auth.dto.AuthResponse;
 import com.bido.auth.entity.User;
 import com.bido.auth.entity.enums.UserRole;
-import com.bido.auth.exception.AccountSuspendedException;
-import com.bido.auth.exception.InvalidRoleException;
-import com.bido.auth.exception.RateLimitException;
-import com.bido.auth.exception.InvalidOtpException;
+import com.bido.auth.exception.*;
 import com.bido.auth.repository.UserRepository;
 import com.bido.auth.utils.ErrorCodes;
 import com.bido.auth.utils.ErrorMessages;
@@ -48,7 +45,7 @@ public class AuthService {
         otpService.validateAndConsumeOtp(email, otpCode);
 
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User negăsit!"));
+                .orElseThrow(() -> new UserNotFoundException(ErrorMessages.USER_NOT_FOUND));
 
         user.setLastLoginAt(Instant.now());
 
